@@ -1,0 +1,5 @@
+io/vertx/ext/apex/handler/oauth2/OAuth2AuthUrlBuilder.class
+io/vertx/ext/apex/handler/oauth2/impl/OAuth2AuthHandlerImpl.class
+io/vertx/ext/apex/handler/oauth2/OAuth2AuthHandler.class
+io/vertx/ext/apex/handler/oauth2/OAuth2HandlerOptions.class
+io/vertx/ext/apex/handler/oauth2/OAuth2State.class
