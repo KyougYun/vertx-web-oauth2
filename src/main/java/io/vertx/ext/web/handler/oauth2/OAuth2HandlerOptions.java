@@ -1,4 +1,4 @@
-package io.vertx.ext.apex.handler.oauth2;
+package io.vertx.ext.web.handler.oauth2;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,7 +13,12 @@ public class OAuth2HandlerOptions {
   /**
    * Default name of param used to store return url information in session
    */
-  public static final String DEFAULT_RETURN_URL_PARAM = "return_url";
+  static final String DEFAULT_RETURN_URL_PARAM = "return_url";
+
+  /**
+   * Default name of param used to store OAuth2 token in session
+   */
+  static final String DEFAULT_OAUTH2_TOKEN_PARAM = "oauth2_token";
 
   /**
    * The url to which a user will be redirected for authentication - i.e. the OAuth2 provider's authentication
@@ -41,6 +46,12 @@ public class OAuth2HandlerOptions {
   private String returnUrlParam = DEFAULT_RETURN_URL_PARAM;
 
   /**
+   * The name of the session parameter to be used to hold the OAuth2 token, if we successfully
+   * obtain one
+   */
+  private String tokenParam = DEFAULT_OAUTH2_TOKEN_PARAM;
+
+  /**
    * Constructor to create options from required fields
    * @param clientId the client id obtained for this application from the OAuth2 provider
    * @param loginRedirectUrl the OAuth2 provider's authentication check URL
@@ -57,8 +68,18 @@ public class OAuth2HandlerOptions {
    * @param newParam - name of the return url parameter within the session
    * @return a reference to this, so the API can be used fluently
    */
-  public OAuth2HandlerOptions setReturnUrlParam(String newParam) {
+  public OAuth2HandlerOptions setReturnUrlParam(final String newParam) {
     this.returnUrlParam = newParam;
+    return this;
+  }
+
+  /**
+   * Set the name of the parameter used for holding the OAuth2 token within the session
+   * @param newParam - name of the token parameter within the session
+   * @return a reference to this, so the API can be used fluently
+   */
+  public OAuth2HandlerOptions setTokenParam(String tokenParam) {
+    this.tokenParam = tokenParam;
     return this;
   }
 
@@ -76,6 +97,13 @@ public class OAuth2HandlerOptions {
    */
   public String returnUrlParam() {
     return returnUrlParam;
+  }
+
+  /**
+   *
+   */
+  public String tokenParam() {
+    return tokenParam;
   }
 
   /**

@@ -1,4 +1,4 @@
-package io.vertx.ext.apex.handler.oauth2;
+package io.vertx.ext.web.handler.oauth2;
 
 /**
  * Builder class for URLs for oAuth2.0 authentication redirection

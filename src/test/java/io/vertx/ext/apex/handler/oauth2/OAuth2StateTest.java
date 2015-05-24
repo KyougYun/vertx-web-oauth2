@@ -1,5 +1,6 @@
 package io.vertx.ext.apex.handler.oauth2;
 
+import io.vertx.ext.web.handler.oauth2.OAuth2State;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

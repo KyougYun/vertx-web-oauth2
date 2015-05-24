@@ -1,4 +1,4 @@
-package io.vertx.ext.apex.handler.oauth2;
+package io.vertx.ext.web.handler.oauth2;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -10,7 +10,7 @@ import java.security.NoSuchAlgorithmException;
  * re-generate the state parameter from session data and compare with the state parameter echoed back at us by
  * the OAuth2 authentication provider in our authentication result handling, thus helping protect us from attack
  */
-class OAuth2State {
+public class OAuth2State {
 
   /**
    * The delimiter we'll use when hashing our parameters to a single state parameter

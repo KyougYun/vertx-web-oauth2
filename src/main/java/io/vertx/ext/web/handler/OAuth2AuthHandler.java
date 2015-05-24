@@ -1,9 +1,9 @@
-package io.vertx.ext.apex.handler.oauth2;
+package io.vertx.ext.web.handler;
 
-import io.vertx.ext.apex.Router;
-import io.vertx.ext.apex.handler.AuthHandler;
-import io.vertx.ext.apex.handler.oauth2.impl.OAuth2AuthHandlerImpl;
+import io.vertx.ext.web.handler.oauth2.OAuth2HandlerOptions;
+import io.vertx.ext.web.handler.impl.OAuth2AuthHandlerImpl;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.web.Router;
 
 /**
  * User: jez
