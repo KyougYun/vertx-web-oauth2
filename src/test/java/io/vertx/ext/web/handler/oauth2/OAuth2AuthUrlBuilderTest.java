@@ -1,20 +1,17 @@
-package io.vertx.ext.apex.handler.oauth2;
+package io.vertx.ext.web.handler.oauth2;
 
-import io.vertx.ext.web.handler.oauth2.OAuth2AuthUrlBuilder;
-import io.vertx.ext.web.handler.oauth2.OAuth2State;
+import io.vertx.ext.apex.handler.oauth2.UrlBuildingTest;
 import org.junit.Test;
 
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * User: jez
  */
-public class OAuth2AuthUrlBuilderTest {
+public class OAuth2AuthUrlBuilderTest extends UrlBuildingTest {
 
     private static final String TEST_HOST = "1.1.1.1";
     private static final String TEST_PORT = "9090";
@@ -44,7 +41,7 @@ public class OAuth2AuthUrlBuilderTest {
         assertEquals(queryParams.get("response_type"), RESPONSE_TYPE_CODE);
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected=IllegalArgumentException.class)
     public void nullClientIdThrowsException() {
         OAuth2AuthUrlBuilder builder = new OAuth2AuthUrlBuilder();
         builder.setAuthenticationUrl(TEST_PROTOCOL + TEST_HOST + ":" + TEST_PORT + TEST_AUTH_URL)
@@ -53,7 +50,7 @@ public class OAuth2AuthUrlBuilderTest {
         builder.build();
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected=IllegalArgumentException.class)
     public void nullBaseUrlThrowsException() {
         OAuth2AuthUrlBuilder builder = new OAuth2AuthUrlBuilder();
         builder.setClientId(TEST_CLIENT_ID)
@@ -62,7 +59,7 @@ public class OAuth2AuthUrlBuilderTest {
         builder.build();
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected=IllegalArgumentException.class)
     public void nullRedirectUrlThrowsException() {
         OAuth2AuthUrlBuilder builder = new OAuth2AuthUrlBuilder();
         builder.setAuthenticationUrl(TEST_PROTOCOL + TEST_HOST + ":" + TEST_PORT + TEST_AUTH_URL)
@@ -71,21 +68,13 @@ public class OAuth2AuthUrlBuilderTest {
         builder.build();
     }
 
-    @Test(expected=IllegalStateException.class)
+    @Test(expected=IllegalArgumentException.class)
     public void nullStateThrowsException() {
         OAuth2AuthUrlBuilder builder = new OAuth2AuthUrlBuilder();
         builder.setAuthenticationUrl(TEST_PROTOCOL + TEST_HOST + ":" + TEST_PORT + TEST_AUTH_URL)
                 .setClientId(TEST_CLIENT_ID)
                 .setRedirectUri(TEST_PROTOCOL + TEST_HOST + ":" + TEST_PORT + TEST_REDIRECT_URI);
         builder.build();
-    }
-
-    private Map extractQueryParams(URL url) {
-        String query = url.getQuery();
-        String[] queryPairs = query.split("&");
-        return Arrays.stream(queryPairs)
-                .map(s -> s.split("="))
-                .collect(Collectors.toMap(sa -> sa[0], sa -> sa[1]));
     }
 
 

@@ -4,11 +4,14 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -27,7 +30,7 @@ public class OAuth2ProviderMimic extends AbstractVerticle {
 
   private static final String LOCATION_HEADER = "location";
 
-  private Set<String> pendingCodes = new HashSet<>();
+  private Map<String, String> pendingCodes = new HashMap<>();
 
   @Override
   public void start() throws Exception {
@@ -37,6 +40,8 @@ public class OAuth2ProviderMimic extends AbstractVerticle {
   private Router router() {
     Router router = Router.router(vertx);
     router.route(HttpMethod.GET, OAUTH2_PROVIDER_SUCCESS_ENDPOINT).handler(authSuccessHandler());
+    router.route(HttpMethod.POST, OAUTH2_PROVIDER_TOKEN_ENDPOINT).handler(bodyHandlerForTokenRequest());
+    router.route(HttpMethod.POST, OAUTH2_PROVIDER_TOKEN_ENDPOINT).handler(tokenRequestHandler());
     return router;
   }
 
@@ -53,18 +58,62 @@ public class OAuth2ProviderMimic extends AbstractVerticle {
       final StringBuilder sb = new StringBuilder(redirectUrl);
       sb.append("?");
       sb.append("state").append("=").append(state);
-      sb.append("&").append("code").append("=").append(newCode());
+      sb.append("&").append("code").append("=").append(newCode(clientId, redirectUrl));
       System.out.println("*" + sb.toString());
       rc.response().putHeader("location", sb.toString()).setStatusCode(302).end();
     };
   }
 
-  private String newCode() {
+  private Handler<RoutingContext> bodyHandlerForTokenRequest() {
+    return BodyHandler.create();
+  }
+
+  private Handler<RoutingContext> tokenRequestHandler() {
+    return rc -> {
+      // Extract parameters from request body - body handler should make these accessible from params collection
+      final Optional<String> grantType = Optional.ofNullable(rc.request().getParam("grant_type"));
+      final String code = rc.request().getParam("code");
+      final String redirectUri = rc.request().getParam("redirect_uri");
+      final String clientId = rc.request().getParam("client_id");
+
+      Optional<String> token = grantType.flatMap(s -> {
+        if (code == null || redirectUri == null || clientId == null) {
+          return Optional.empty();
+        }
+        return Optional.of(s.equals("authorization_code")).flatMap(b ->
+            b ? accessToken(clientId, redirectUri, code) : Optional.empty()
+        ) ;
+      });
+
+      if (token.isPresent()) {
+        JsonObject responseBody = new JsonObject().put("access_token", token.get())
+          .put("token_type", "Bearer")
+          .put("expires_in", 5000);
+        rc.response().setStatusCode(200).end(responseBody.toString());
+      } else {
+        rc.fail(401); // We couldn't resolve to a token
+      }
+
+
+    };
+  }
+
+
+
+  private Optional<String> accessToken(final String clientId, final String redirectUri, final String accessCode) {
+    Optional<String> token = Optional.ofNullable(pendingCodes.get(getKey(clientId, redirectUri))).flatMap(code ->
+        Optional.of(UUID.randomUUID().toString())
+    );
+    return token;
+  }
+
+  private String getKey(final String clientId, final String redirectUri) {
+    return clientId + "::" + redirectUri;
+  }
+
+  private String newCode(final String clientId, final String redirectUri) {
     final String newCode = UUID.randomUUID().toString();
-    if (pendingCodes.contains(newCode)) {
-      return newCode();
-    }
-    pendingCodes.add(newCode);
+    pendingCodes.put(getKey(clientId, redirectUri), newCode);
     return newCode;
   }
 }

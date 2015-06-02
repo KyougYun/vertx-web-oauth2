@@ -1,20 +1,28 @@
 package io.vertx.ext.web.handler.impl;
 
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.handler.oauth2.OAuth2AuthUrlBuilder;
-import io.vertx.ext.web.handler.oauth2.OAuth2HandlerOptions;
-import io.vertx.ext.web.handler.oauth2.OAuth2State;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.OAuth2AuthHandler;
+import io.vertx.ext.web.handler.oauth2.AuthTokenRequestParameters;
+import io.vertx.ext.web.handler.oauth2.OAuth2AuthUrlBuilder;
+import io.vertx.ext.web.handler.oauth2.OAuth2HandlerOptions;
+import io.vertx.ext.web.handler.oauth2.OAuth2Param;
+import io.vertx.ext.web.handler.oauth2.OAuth2State;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
 
 /**
  * User: jez
@@ -28,14 +36,22 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
   private final String authResultHandlerUrl;
   private final String clientId;
   private final String tokenParam;
+  private final BiFunction<HttpClient, String, HttpClientRequest> authTokenRequestFactory;
+  private final HttpClient httpClient;
 
-  public OAuth2AuthHandlerImpl(AuthProvider authProvider, OAuth2HandlerOptions handlerOptions, Router router) {
-    super (authProvider);
+  public OAuth2AuthHandlerImpl(AuthProvider authProvider, OAuth2HandlerOptions handlerOptions, Router router, Vertx vertx) {
+    super(authProvider);
     this.loginRedirectURL = handlerOptions.authProviderRedirectUrl();
     this.returnURLParam = handlerOptions.returnUrlParam();
     this.clientId = handlerOptions.clientId();
     this.authResultHandlerUrl = handlerOptions.authResultHandlerUrl();
     this.tokenParam = handlerOptions.tokenParam();
+
+    httpClient = vertx.createHttpClient();
+
+    final AuthTokenRequestParameters authTokenRequestParams = new AuthTokenRequestParameters(handlerOptions.authTokenUrl(),
+      handlerOptions.clientId(), handlerOptions.clientSecret(), handlerOptions.authResultHandlerUrl(), authTokenResultHandler());
+    authTokenRequestFactory = handlerOptions.authTokenRequestFactoryProvider().factory(authTokenRequestParams);
 
     try {
       final String authResultPath = authResultPath(this.authResultHandlerUrl);
@@ -51,7 +67,7 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
 
     Session session = routingContext.session();
     if (session != null) {
-      User user = UserHolder.getUser(authProvider, routingContext);
+      User user = routingContext.user();
       if (user != null) {
         // Already logged in, just authorise
         authorise(user, routingContext);
@@ -64,7 +80,7 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
         OAuth2AuthUrlBuilder urlBuilder = new OAuth2AuthUrlBuilder()
           .setAuthenticationUrl(loginRedirectURL)
           .setClientId(clientId)
-          .setState(new OAuth2State(returnURLParam, salt, routingContext.session().id()))
+          .setState(new OAuth2State(routingContext.request().path(), salt, routingContext.session().id()))
           .setRedirectUri(authResultHandlerUrl);
         String actualRedirect = urlBuilder.build();
         routingContext.response().putHeader("location", actualRedirect).setStatusCode(302).end();
@@ -99,11 +115,27 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
       } else {
         OAuth2State expectedState = new OAuth2State(originalUrl, stateSalt, sessionId);
         if (expectedState.toString().equals(state)) {
+          final Optional<String> code = Optional.ofNullable(rc.request().getParam(OAuth2Param.CODE.paramName()));
+          if (code.isPresent()) {
+            HttpClientRequest request = authTokenRequestFactory.apply(httpClient, code.get()); // Maybe convert this to flatmap?
+            request.end();
+            System.out.println("Looking good, time to get auth token");
+          } else {
+            // TODO: LOG FAILURE CONDITIONS
+            rc.fail(401);
+          }
         } else {
           rc.fail(401);
         }
       }
     };
+
   }
 
+  private Handler<HttpClientResponse> authTokenResultHandler() {
+    return resp -> resp.bodyHandler(body -> {
+      System.out.println(body.toString());
+    });
+
+  }
 }

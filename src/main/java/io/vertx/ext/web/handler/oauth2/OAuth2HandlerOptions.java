@@ -32,11 +32,22 @@ public class OAuth2HandlerOptions {
   private final String clientId;
 
   /**
+   * The OAuth2 provider's client secret for this application
+   */
+  private final String clientSecret;
+
+  /**
    * The URL to which the OAuth2 provider should redirect the client following an authentication attempt,
    * whether successful or otherwise. This URL should deal with the result of authentication, and if the
    * auth was successful, permit the client to proceed appropriately
    */
   private final String authResultHandlerUrl;
+
+  /**
+   * The URL to which the OAuth2 handler will submit a request containing the code supplied by the client on
+   * redirect to exchange for an OAuth2 token.
+   */
+  private final String authTokenUrl;
 
   /**
    * The name of the session parameter to be used to hold the url originally requested by the client which triggered
@@ -52,15 +63,25 @@ public class OAuth2HandlerOptions {
   private String tokenParam = DEFAULT_OAUTH2_TOKEN_PARAM;
 
   /**
+   * The factory provider to be used to create a factory for http requests to convert an authorization code returned
+   * from the OAuth2 provider to the associated authorization token
+   */
+  private AuthTokenRequestFactoryProvider authTokenRequestFactoryProvider = AuthTokenRequestFactoryProvider.POST;
+
+  /**
    * Constructor to create options from required fields
    * @param clientId the client id obtained for this application from the OAuth2 provider
    * @param loginRedirectUrl the OAuth2 provider's authentication check URL
    * @param authResultHandlerUrl the URL (typically exposed by our application) for handling the authentication result
    */
-  public OAuth2HandlerOptions(final String clientId, final String loginRedirectUrl, final String authResultHandlerUrl) {
+  public OAuth2HandlerOptions(final String clientId, final String clientSecret,
+                              final String loginRedirectUrl, final String authResultHandlerUrl,
+                              final String oAuth2TokenUrl) {
     this.authProviderRedirectUrl = loginRedirectUrl;
     this.clientId = clientId;
+    this.clientSecret = clientSecret;
     this.authResultHandlerUrl = authResultHandlerUrl;
+    this.authTokenUrl = oAuth2TokenUrl;
   }
 
   /**
@@ -75,11 +96,16 @@ public class OAuth2HandlerOptions {
 
   /**
    * Set the name of the parameter used for holding the OAuth2 token within the session
-   * @param newParam - name of the token parameter within the session
+   * @param tokenParam - name of the token parameter within the session
    * @return a reference to this, so the API can be used fluently
    */
-  public OAuth2HandlerOptions setTokenParam(String tokenParam) {
+  public OAuth2HandlerOptions setTokenParam(final String tokenParam) {
     this.tokenParam = tokenParam;
+    return this;
+  }
+
+  public OAuth2HandlerOptions setAuthTokenRequestFactoryProvider(final AuthTokenRequestFactoryProvider provider) {
+    this.authTokenRequestFactoryProvider = provider;
     return this;
   }
 
@@ -89,6 +115,14 @@ public class OAuth2HandlerOptions {
    */
   public String authProviderRedirectUrl() {
     return authProviderRedirectUrl;
+  }
+
+  /**
+   * Retrieve the auth token url for the OAuth2 provider
+   * @return the url to hit to get an auth token from a code supplied during authentication
+   */
+  public String authTokenUrl() {
+    return authTokenUrl;
   }
 
   /**
@@ -115,6 +149,14 @@ public class OAuth2HandlerOptions {
   }
 
   /**
+   * Retrieve the client secret for use in private communications between our application and the OAuth2 provider
+   * @return the client secret
+   */
+  public String clientSecret() {
+    return clientSecret;
+  }
+
+  /**
    * Retrieve the url for handling the auth result. This is given to the auth provider as a parameter, and they will
    * then redirect the user to this url following the authentication attempt. Because this is used as a redirect,
    * it must be a full url, not just the local path
@@ -122,6 +164,15 @@ public class OAuth2HandlerOptions {
    */
   public String authResultHandlerUrl() {
     return authResultHandlerUrl;
+  }
+
+  /**
+   * Retrieve the token request factory provider which provides the mechanism to create a function which takes an
+   * OAuth2 authentication code and converts it into an authentication token
+   * @return the configured factory provider which will be used to create the request factory function
+   */
+  public AuthTokenRequestFactoryProvider authTokenRequestFactoryProvider() {
+    return authTokenRequestFactoryProvider;
   }
 
   /**

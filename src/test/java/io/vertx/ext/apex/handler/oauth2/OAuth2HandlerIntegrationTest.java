@@ -32,7 +32,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class OAuth2HandlerIntegrationTest extends VertxTestBase {
 
   private static final String TEST_CLIENT_ID = "testClient";
+  private static final String TEST_CLIENT_SECRET = "testClientSecret";
   private static final String TEST_OAUTH2_SUCCESS_URL = "http://localhost:9292/authSuccess";
+  private static final String TEST_OAUTH2_TOKEN_URL = "http://localhost:9292/authToken";
   public static final String APPLICATION_SERVER = "http://localhost:8080";
   private static final String AUTH_RESULT_HANDLER_URL = APPLICATION_SERVER + "/authResult";
   private static final String SESSION_PARAM_TOKEN = "testOAuth2Token";
@@ -105,7 +107,8 @@ public class OAuth2HandlerIntegrationTest extends VertxTestBase {
 
     AuthProvider authProvider = SimpleOAuth2Provider.create(SESSION_PARAM_TOKEN, sessionStore);
     router.route("/private/*").handler(OAuth2AuthHandler.create(authProvider,
-      new OAuth2HandlerOptions(TEST_CLIENT_ID, TEST_OAUTH2_SUCCESS_URL, AUTH_RESULT_HANDLER_URL), router));
+      new OAuth2HandlerOptions(TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_OAUTH2_SUCCESS_URL, AUTH_RESULT_HANDLER_URL, TEST_OAUTH2_TOKEN_URL
+      ), router, vertx));
 
 
     router.route().handler(routingContext -> {

@@ -1,5 +1,7 @@
 package io.vertx.ext.web.handler.oauth2;
 
+import static io.vertx.ext.web.handler.oauth2.OAuth2Param.*;
+
 /**
  * Builder class for URLs for oAuth2.0 authentication redirection
  * Note that the following elements of the URL are considered mandatory for this implementation:
@@ -12,16 +14,9 @@ package io.vertx.ext.web.handler.oauth2;
  * The response type will always be set as code, at least for now (we will convert it to a token as part of validation)
  * Scope is not required for now at least - we will default it
  */
-public class OAuth2AuthUrlBuilder {
+public class OAuth2AuthUrlBuilder extends GetUrlBuilder {
 
-  private static final String PARAM_KEY_VAL_SEPARATOR = "=";
-  private static final String CLIENT_ID_PARAM = "client_id";
-  private static final String RESPONSE_TYPE_PARAM = "response_type";
-  private static final String REDIRECT_URI_PARAM = "redirect_uri";
   private static final String RESPONSE_TYPE_CODE = "code";
-  private static final String STATE_PARAM = "state";
-  private static final String FIRST_PARAM_DELIMITER = "?";
-  private static final String SUBSEQUENT_PARAM_DELIMITER = "&";
 
   /**
    * The url through which the OAuth2 provider exposes its authentication, this is the url to which we redirect
@@ -95,41 +90,17 @@ public class OAuth2AuthUrlBuilder {
    * @return String - the redirect url for authentication, including our set of parameters
    */
   public final String build() {
-    validateMemberNotNullOrEmpty(authenticationUrl, "Base authorization url must not be null or empty in OAuth2AuthUrlBuilder");
-    validateMemberNotNullOrEmpty(clientId, "Client id must not be null or empty in OAuth2AuthUrlBuilder");
-    validateMemberNotNullOrEmpty(redirectUri, "Redirect URI must not be null or empty in OAuth2AuthUrlBuilder");
-    validateMemberNotNull(state, "State must not be null in OAuth2AuthUrlBuilder");
+    validateParamNotNullOrEmpty(authenticationUrl, "Base authorization url must not be null or empty in OAuth2AuthUrlBuilder");
+    validateParamNotNullOrEmpty(clientId, "Client id must not be null or empty in OAuth2AuthUrlBuilder");
+    validateParamNotNullOrEmpty(redirectUri, "Redirect URI must not be null or empty in OAuth2AuthUrlBuilder");
+    validateParamNotNull(state, "State must not be null in OAuth2AuthUrlBuilder");
 
     final StringBuilder builder = new StringBuilder(authenticationUrl);
-    appendFirstParam(builder, CLIENT_ID_PARAM, clientId);
-    appendSubsequentParam(builder, REDIRECT_URI_PARAM, redirectUri);
-    appendSubsequentParam(builder, STATE_PARAM, state.toString());
-    appendSubsequentParam(builder, RESPONSE_TYPE_PARAM, RESPONSE_TYPE_CODE);
+    appendFirstParam(builder, CLIENT_ID, clientId);
+    appendSubsequentParam(builder, REDIRECT_URI, redirectUri);
+    appendSubsequentParam(builder, STATE, state.toString());
+    appendSubsequentParam(builder, RESPONSE_TYPE, RESPONSE_TYPE_CODE);
     return builder.toString();
-  }
-
-  private void appendFirstParam(final StringBuilder builder, final String paramName, final String paramValue) {
-    appendParam(builder, FIRST_PARAM_DELIMITER, paramName, paramValue);
-  }
-
-  private void appendSubsequentParam(final StringBuilder builder, final String paramName, final String paramValue) {
-    appendParam(builder, SUBSEQUENT_PARAM_DELIMITER, paramName, paramValue);
-  }
-
-  private void appendParam(final StringBuilder builder, final String delimiter, final String paramName, final String paramValue) {
-    builder.append(delimiter).append(paramName).append(PARAM_KEY_VAL_SEPARATOR).append(paramValue);
-  }
-
-  private void validateMemberNotNullOrEmpty(final String requiredValue, final String failureMsg) {
-    if (requiredValue == null || requiredValue.length() == 0) {
-      throw new IllegalStateException(failureMsg);
-    }
-  }
-
-  private void validateMemberNotNull(final Object requiredValue, final String failureMsg) {
-    if (requiredValue == null) {
-      throw new IllegalStateException(failureMsg);
-    }
   }
 
 }
