@@ -1,14 +1,11 @@
 package io.vertx.ext.auth.impl.oauth2;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.oauth2.impl.SimpleOAuth2AuthProviderImpl;
-
-import java.util.Set;
 
 /**
  * Trivial User implementation for OAuth2 authentication only. All role requests for now return true - we may need
@@ -30,26 +27,8 @@ public class SimpleOAuth2User implements User {
   }
 
   @Override
-  public User hasRole(String role, Handler<AsyncResult<Boolean>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(true));
-    return this;
-  }
-
-  @Override
-  public User hasPermission(String permission, Handler<AsyncResult<Boolean>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(true));
-    return this;
-  }
-
-  @Override
-  public User hasRoles(Set<String> roles, Handler<AsyncResult<Boolean>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(true));
-    return this;
-  }
-
-  @Override
-  public User hasPermissions(Set<String> permissions, Handler<AsyncResult<Boolean>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(true));
+  public User isAuthorised(String s, Handler<AsyncResult<Boolean>> handler) {
+    // Simple OAuth2 authentication doesn't currently concern itself with permissions for a user
     return this;
   }
 
