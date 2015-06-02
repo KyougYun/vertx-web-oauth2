@@ -1,6 +1,7 @@
 package io.vertx.ext.auth.impl.oauth2;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
@@ -29,6 +30,7 @@ public class SimpleOAuth2User implements User {
   @Override
   public User isAuthorised(String s, Handler<AsyncResult<Boolean>> handler) {
     // Simple OAuth2 authentication doesn't currently concern itself with permissions for a user
+    handler.handle(Future.succeededFuture());
     return this;
   }
 
