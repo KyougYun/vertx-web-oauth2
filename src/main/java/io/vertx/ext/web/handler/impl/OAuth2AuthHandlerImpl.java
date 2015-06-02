@@ -133,9 +133,12 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
   }
 
   private Handler<HttpClientResponse> authTokenResultHandler() {
-    return resp -> resp.bodyHandler(body -> {
-      System.out.println(body.toString());
-    });
+    return resp -> {
+      System.out.println(resp.statusCode());
+      resp.bodyHandler(body -> {
+        System.out.println(body.toString());
+      });
+    };
 
   }
 }
