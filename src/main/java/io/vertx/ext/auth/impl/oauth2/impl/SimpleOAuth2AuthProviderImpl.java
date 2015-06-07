@@ -7,10 +7,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.oauth2.SimpleOAuth2Provider;
 import io.vertx.ext.auth.impl.oauth2.SimpleOAuth2User;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.sstore.SessionStore;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 /**
  * A very simple AuthProvider implementation for OAuth2. It expects a session id in the authInfo and will
@@ -18,8 +20,6 @@ import java.util.Optional;
  * assume that authentication has been successful, otherwise it will return a failed result.
  */
 public class SimpleOAuth2AuthProviderImpl implements SimpleOAuth2Provider {
-
-
 
   /**
    * The name of the session parameter/field to interrogate for an OAuth2 token
@@ -61,4 +61,10 @@ public class SimpleOAuth2AuthProviderImpl implements SimpleOAuth2Provider {
     });
   }
 
+  @Override
+  public BiConsumer<RoutingContext, String> tokenHandler() {
+    return ((routingContext, token) -> {
+      routingContext.session().put(tokenParamName, token);
+    });
+  }
 }

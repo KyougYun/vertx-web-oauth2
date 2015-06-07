@@ -27,7 +27,7 @@ public class OAuth2HandlerOptionsTest {
     assertEquals(TEST_AUTH_RESULT_HANDLER_URL, options.authResultHandlerUrl());
     assertEquals(TEST_AUTH_RESULT_HANDLER_PATH, options.authResultHandlerPath());
     assertEquals(TEST_TOKEN_URL, options.authTokenUrl());
-    assertEquals(AuthTokenRequestFactoryProvider.POST, options.authTokenRequestFactoryProvider());
+    assertEquals(AuthTokenRequestProvider.POST, options.authTokenRequestFactoryProvider());
     assertEquals(OAuth2HandlerOptions.DEFAULT_RETURN_URL_PARAM, options.returnUrlParam());
     assertEquals(OAuth2HandlerOptions.DEFAULT_OAUTH2_TOKEN_PARAM, options.tokenParam());
   }
@@ -59,7 +59,7 @@ public class OAuth2HandlerOptionsTest {
   @Test
   public void testTokenUrlHttpMethod() throws Exception {
     OAuth2HandlerOptions options = baseOAuth2HandlerOptions()
-      .setAuthTokenRequestFactoryProvider(AuthTokenRequestFactoryProvider.GET);
+      .setAuthTokenRequestFactoryProvider(AuthTokenRequestProvider.GET);
   }
 
   private OAuth2HandlerOptions baseOAuth2HandlerOptions() {

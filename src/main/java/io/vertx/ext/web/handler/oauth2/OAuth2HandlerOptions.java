@@ -66,7 +66,7 @@ public class OAuth2HandlerOptions {
    * The factory provider to be used to create a factory for http requests to convert an authorization code returned
    * from the OAuth2 provider to the associated authorization token
    */
-  private AuthTokenRequestFactoryProvider authTokenRequestFactoryProvider = AuthTokenRequestFactoryProvider.POST;
+  private AuthTokenRequestProvider authTokenRequestFactoryProvider = AuthTokenRequestProvider.POST;
 
   /**
    * Constructor to create options from required fields
@@ -104,7 +104,7 @@ public class OAuth2HandlerOptions {
     return this;
   }
 
-  public OAuth2HandlerOptions setAuthTokenRequestFactoryProvider(final AuthTokenRequestFactoryProvider provider) {
+  public OAuth2HandlerOptions setAuthTokenRequestFactoryProvider(final AuthTokenRequestProvider provider) {
     this.authTokenRequestFactoryProvider = provider;
     return this;
   }
@@ -171,7 +171,7 @@ public class OAuth2HandlerOptions {
    * OAuth2 authentication code and converts it into an authentication token
    * @return the configured factory provider which will be used to create the request factory function
    */
-  public AuthTokenRequestFactoryProvider authTokenRequestFactoryProvider() {
+  public AuthTokenRequestProvider authTokenRequestFactoryProvider() {
     return authTokenRequestFactoryProvider;
   }
 

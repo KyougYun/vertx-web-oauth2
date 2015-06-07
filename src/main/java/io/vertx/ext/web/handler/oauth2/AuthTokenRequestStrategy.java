@@ -3,6 +3,7 @@ package io.vertx.ext.web.handler.oauth2;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 /**
@@ -26,6 +27,7 @@ public interface AuthTokenRequestStrategy {
    *                 OAuth2 provider
    * @return - the factory function
    */
-  public BiFunction<HttpClient, String, HttpClientRequest> factory(AuthTokenRequestParameters params);
+  BiFunction<HttpClient, String, HttpClientRequest> factory(AuthTokenRequestParameters params);
+  BiConsumer<HttpClientRequest, String> bodyWriter(AuthTokenRequestParameters params);
 
 }

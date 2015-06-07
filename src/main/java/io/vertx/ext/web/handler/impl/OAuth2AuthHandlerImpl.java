@@ -3,11 +3,12 @@ package io.vertx.ext.web.handler.impl;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.impl.oauth2.OAuth2AuthProvider;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
@@ -22,7 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 /**
  * User: jez
@@ -36,11 +37,17 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
   private final String authResultHandlerUrl;
   private final String clientId;
   private final String tokenParam;
-  private final BiFunction<HttpClient, String, HttpClientRequest> authTokenRequestFactory;
+  private final AuthTokenRequestor authTokenRequestor;
   private final HttpClient httpClient;
+  private final BiConsumer<RoutingContext, String> tokenHandler;
 
   public OAuth2AuthHandlerImpl(AuthProvider authProvider, OAuth2HandlerOptions handlerOptions, Router router, Vertx vertx) {
     super(authProvider);
+    if (!(authProvider instanceof OAuth2AuthProvider)) {
+      throw new RuntimeException("Auth provider for an OAuth2 handler must implement OAuth2AuthProvider");
+    }
+    OAuth2AuthProvider oAuth2AuthProvider = (OAuth2AuthProvider) authProvider;
+    this.tokenHandler = oAuth2AuthProvider.tokenHandler();
     this.loginRedirectURL = handlerOptions.authProviderRedirectUrl();
     this.returnURLParam = handlerOptions.returnUrlParam();
     this.clientId = handlerOptions.clientId();
@@ -50,8 +57,8 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
     httpClient = vertx.createHttpClient();
 
     final AuthTokenRequestParameters authTokenRequestParams = new AuthTokenRequestParameters(handlerOptions.authTokenUrl(),
-      handlerOptions.clientId(), handlerOptions.clientSecret(), handlerOptions.authResultHandlerUrl(), authTokenResultHandler());
-    authTokenRequestFactory = handlerOptions.authTokenRequestFactoryProvider().factory(authTokenRequestParams);
+      handlerOptions.clientId(), handlerOptions.clientSecret(), handlerOptions.authResultHandlerUrl(), authTokenResultHandler(null));
+    authTokenRequestor = new AuthTokenRequestor(handlerOptions.authTokenRequestFactoryProvider(), authTokenRequestParams);
 
     try {
       final String authResultPath = authResultPath(this.authResultHandlerUrl);
@@ -111,15 +118,14 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
         stateSalt == null ||
         originalUrl == null ||
         sessionId == null) {
-        rc.fail(401); // unauthorised - should we accept a file to write out for this as an                           // alternative?
+        rc.fail(401);
       } else {
         OAuth2State expectedState = new OAuth2State(originalUrl, stateSalt, sessionId);
         if (expectedState.toString().equals(state)) {
           final Optional<String> code = Optional.ofNullable(rc.request().getParam(OAuth2Param.CODE.paramName()));
           if (code.isPresent()) {
-            HttpClientRequest request = authTokenRequestFactory.apply(httpClient, code.get()); // Maybe convert this to flatmap?
-            request.end();
             System.out.println("Looking good, time to get auth token");
+            authTokenRequestor.invoke(httpClient, code.get(), authTokenResultHandler(null));
           } else {
             // TODO: LOG FAILURE CONDITIONS
             rc.fail(401);
@@ -132,13 +138,23 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
 
   }
 
-  private Handler<HttpClientResponse> authTokenResultHandler() {
+  private Handler<HttpClientResponse> authTokenResultHandler(final Handler<String> tokenHandler) {
     return resp -> {
       System.out.println(resp.statusCode());
       resp.bodyHandler(body -> {
         System.out.println(body.toString());
+        JsonObject json = new JsonObject(body.toString());
+        Optional<String> token = Optional.ofNullable(json.getString("access_token"));
+        if (token.isPresent()) {
+          System.out.println("TOKEN PRESENT");
+//          tokenHandler.handle(token.get());
+        } else {
+          // let's do some detailed failure handling here
+          System.out.println("Handle failure better");
+        }
       });
     };
-
   }
+
+//  private Handler<String>
 }
