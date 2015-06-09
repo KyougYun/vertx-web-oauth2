@@ -16,11 +16,6 @@ public class OAuth2HandlerOptions {
   static final String DEFAULT_RETURN_URL_PARAM = "return_url";
 
   /**
-   * Default name of param used to store OAuth2 token in session
-   */
-  static final String DEFAULT_OAUTH2_TOKEN_PARAM = "oauth2_token";
-
-  /**
    * The url to which a user will be redirected for authentication - i.e. the OAuth2 provider's authentication
    * URL (which may also involve a login)
    */
@@ -57,12 +52,6 @@ public class OAuth2HandlerOptions {
   private String returnUrlParam = DEFAULT_RETURN_URL_PARAM;
 
   /**
-   * The name of the session parameter to be used to hold the OAuth2 token, if we successfully
-   * obtain one
-   */
-  private String tokenParam = DEFAULT_OAUTH2_TOKEN_PARAM;
-
-  /**
    * The factory provider to be used to create a factory for http requests to convert an authorization code returned
    * from the OAuth2 provider to the associated authorization token
    */
@@ -94,16 +83,6 @@ public class OAuth2HandlerOptions {
     return this;
   }
 
-  /**
-   * Set the name of the parameter used for holding the OAuth2 token within the session
-   * @param tokenParam - name of the token parameter within the session
-   * @return a reference to this, so the API can be used fluently
-   */
-  public OAuth2HandlerOptions setTokenParam(final String tokenParam) {
-    this.tokenParam = tokenParam;
-    return this;
-  }
-
   public OAuth2HandlerOptions setAuthTokenRequestFactoryProvider(final AuthTokenRequestProvider provider) {
     this.authTokenRequestFactoryProvider = provider;
     return this;
@@ -131,13 +110,6 @@ public class OAuth2HandlerOptions {
    */
   public String returnUrlParam() {
     return returnUrlParam;
-  }
-
-  /**
-   *
-   */
-  public String tokenParam() {
-    return tokenParam;
   }
 
   /**

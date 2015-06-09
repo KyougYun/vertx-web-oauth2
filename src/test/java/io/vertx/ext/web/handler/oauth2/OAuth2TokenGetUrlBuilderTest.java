@@ -6,8 +6,8 @@ import org.junit.Test;
 import java.net.URL;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 import static io.vertx.ext.web.handler.oauth2.OAuth2Param.*;
+import static org.junit.Assert.*;
 
 public class OAuth2TokenGetUrlBuilderTest extends UrlBuildingTest {
 

@@ -36,7 +36,6 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
   private final String returnURLParam;
   private final String authResultHandlerUrl;
   private final String clientId;
-  private final String tokenParam;
   private final AuthTokenRequestor authTokenRequestor;
   private final HttpClient httpClient;
   private final BiConsumer<RoutingContext, String> tokenHandler;
@@ -52,12 +51,11 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
     this.returnURLParam = handlerOptions.returnUrlParam();
     this.clientId = handlerOptions.clientId();
     this.authResultHandlerUrl = handlerOptions.authResultHandlerUrl();
-    this.tokenParam = handlerOptions.tokenParam();
 
     httpClient = vertx.createHttpClient();
 
     final AuthTokenRequestParameters authTokenRequestParams = new AuthTokenRequestParameters(handlerOptions.authTokenUrl(),
-      handlerOptions.clientId(), handlerOptions.clientSecret(), handlerOptions.authResultHandlerUrl(), authTokenResultHandler(null));
+      handlerOptions.clientId(), handlerOptions.clientSecret(), handlerOptions.authResultHandlerUrl());
     authTokenRequestor = new AuthTokenRequestor(handlerOptions.authTokenRequestFactoryProvider(), authTokenRequestParams);
 
     try {
@@ -125,7 +123,7 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
           final Optional<String> code = Optional.ofNullable(rc.request().getParam(OAuth2Param.CODE.paramName()));
           if (code.isPresent()) {
             System.out.println("Looking good, time to get auth token");
-            authTokenRequestor.invoke(httpClient, code.get(), authTokenResultHandler(null));
+            authTokenRequestor.invoke(httpClient, code.get(), authTokenResultHandler(tokenHandler, rc));
           } else {
             // TODO: LOG FAILURE CONDITIONS
             rc.fail(401);
@@ -138,7 +136,7 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
 
   }
 
-  private Handler<HttpClientResponse> authTokenResultHandler(final Handler<String> tokenHandler) {
+  private Handler<HttpClientResponse> authTokenResultHandler(final BiConsumer<RoutingContext, String> tokenHandler, RoutingContext routingContext) {
     return resp -> {
       System.out.println(resp.statusCode());
       resp.bodyHandler(body -> {
@@ -147,7 +145,7 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
         Optional<String> token = Optional.ofNullable(json.getString("access_token"));
         if (token.isPresent()) {
           System.out.println("TOKEN PRESENT");
-//          tokenHandler.handle(token.get());
+          tokenHandler.accept(routingContext, token.get());
         } else {
           // let's do some detailed failure handling here
           System.out.println("Handle failure better");

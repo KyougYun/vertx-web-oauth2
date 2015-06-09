@@ -26,10 +26,7 @@ public enum AuthTokenRequestProvider implements AuthTokenRequestStrategy {
     public BiFunction<HttpClient, String, HttpClientRequest> factory(AuthTokenRequestParameters params) {
       final OAuth2TokenGetUrlBuilder builder = new OAuth2TokenGetUrlBuilder(params.authTokenUrl(), params.clientId(),
         params.clientSecret(), params.redirectUri());
-      return (httpClient, authCode) -> {
-        final HttpClientRequest request = httpClient.getAbs(builder.build(authCode));
-        return request;
-      };
+      return (httpClient, authCode) -> httpClient.getAbs(builder.build(authCode));
     }
 
     @Override

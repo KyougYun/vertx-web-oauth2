@@ -63,8 +63,6 @@ public class SimpleOAuth2AuthProviderImpl implements SimpleOAuth2Provider {
 
   @Override
   public BiConsumer<RoutingContext, String> tokenHandler() {
-    return ((routingContext, token) -> {
-      routingContext.session().put(tokenParamName, token);
-    });
+    return ((routingContext, token) -> routingContext.session().put(tokenParamName, token));
   }
 }
