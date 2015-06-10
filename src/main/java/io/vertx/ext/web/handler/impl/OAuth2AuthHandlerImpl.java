@@ -77,18 +77,25 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
         // Already logged in, just authorise
         authorise(user, routingContext);
       } else {
-        // Now redirect to the login url - we'll get redirected back here after successful login
-        session.put(returnURLParam, routingContext.request().path());
-        String salt = UUID.randomUUID().toString();
-        session.put(OAUTH2_STATE_SALT, salt);
+        // Now check our authprovider to see if we already have a token
+        authProvider.authenticate(new JsonObject().put("sessionId", session.id()), res -> {
+          if (res.succeeded()) {
+            authorise(user, routingContext);
+          } else {
+            // Now redirect to the login url - we'll get redirected back here after successful login
+            session.put(returnURLParam, routingContext.request().absoluteURI());
+            String salt = UUID.randomUUID().toString();
+            session.put(OAUTH2_STATE_SALT, salt);
 
-        OAuth2AuthUrlBuilder urlBuilder = new OAuth2AuthUrlBuilder()
-          .setAuthenticationUrl(loginRedirectURL)
-          .setClientId(clientId)
-          .setState(new OAuth2State(routingContext.request().path(), salt, routingContext.session().id()))
-          .setRedirectUri(authResultHandlerUrl);
-        String actualRedirect = urlBuilder.build();
-        routingContext.response().putHeader("location", actualRedirect).setStatusCode(302).end();
+            OAuth2AuthUrlBuilder urlBuilder = new OAuth2AuthUrlBuilder()
+              .setAuthenticationUrl(loginRedirectURL)
+              .setClientId(clientId)
+              .setState(new OAuth2State(routingContext.session().get(returnURLParam), salt, routingContext.session().id()))
+              .setRedirectUri(authResultHandlerUrl);
+            String actualRedirect = urlBuilder.build();
+            routingContext.response().putHeader("location", actualRedirect).setStatusCode(302).end();
+          }
+        });
       }
     } else {
       routingContext.fail(new NullPointerException("No session - did you forget to include a SessionHandler?"));
@@ -122,7 +129,6 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
         if (expectedState.toString().equals(state)) {
           final Optional<String> code = Optional.ofNullable(rc.request().getParam(OAuth2Param.CODE.paramName()));
           if (code.isPresent()) {
-            System.out.println("Looking good, time to get auth token");
             authTokenRequestor.invoke(httpClient, code.get(), authTokenResultHandler(tokenHandler, rc));
           } else {
             // TODO: LOG FAILURE CONDITIONS
@@ -138,14 +144,26 @@ public class OAuth2AuthHandlerImpl extends AuthHandlerImpl implements OAuth2Auth
 
   private Handler<HttpClientResponse> authTokenResultHandler(final BiConsumer<RoutingContext, String> tokenHandler, RoutingContext routingContext) {
     return resp -> {
-      System.out.println(resp.statusCode());
       resp.bodyHandler(body -> {
-        System.out.println(body.toString());
         JsonObject json = new JsonObject(body.toString());
         Optional<String> token = Optional.ofNullable(json.getString("access_token"));
         if (token.isPresent()) {
-          System.out.println("TOKEN PRESENT");
           tokenHandler.accept(routingContext, token.get());
+          Session session = routingContext.session();
+          authProvider.authenticate(new JsonObject().put("sessionId", session.id()), res -> {
+            if(res.succeeded()) {
+              User user = res.result();
+              routingContext.setUser(user);
+              String returnURL = session.remove(this.returnURLParam);
+              if(returnURL == null) {
+                routingContext.fail(new IllegalStateException("Logged in OK, but no return URL"));
+              } else {
+                routingContext.response().putHeader("location", returnURL).setStatusCode(302).end();
+              }
+            } else {
+              routingContext.fail(403);
+            }
+          });
         } else {
           // let's do some detailed failure handling here
           System.out.println("Handle failure better");

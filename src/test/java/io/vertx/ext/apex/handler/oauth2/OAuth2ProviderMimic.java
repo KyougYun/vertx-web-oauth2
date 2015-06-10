@@ -59,7 +59,6 @@ public class OAuth2ProviderMimic extends AbstractVerticle {
       sb.append("?");
       sb.append("state").append("=").append(state);
       sb.append("&").append("code").append("=").append(newCode(clientId, redirectUrl));
-      System.out.println("*" + sb.toString());
       rc.response().putHeader("location", sb.toString()).setStatusCode(302).end();
     };
   }

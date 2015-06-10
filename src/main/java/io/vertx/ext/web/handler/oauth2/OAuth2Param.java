@@ -15,7 +15,7 @@ public enum OAuth2Param {
 
   private final String paramName;
 
-  private OAuth2Param(String paramName) {
+  OAuth2Param(String paramName) {
     this.paramName = paramName;
   }
 
